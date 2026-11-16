@@ -107,7 +107,7 @@ function closeChat(){S.unsub&&S.unsub();$('#chat')?.remove();render()}
 function paint(){const L=S.chats[S.cur]||[];$('#msgs').innerHTML=L.length?L.map(x=>`<div class="m ${x.me?'me':''}">${x.k==='Picha'?`<img src="${x.u}" alt="">`:x.k==='Video'?`<video src="${x.u}" controls playsinline></video>`:x.k==='Hati'?`&#128196; <a href="${x.u}" target="_blank" style="color:inherit">${esc(x.t)}</a>`:x.k==='App'?`&#129513; ${esc(x.t)}`:esc(x.t)}</div>`).join(''):'<p class="s" style="text-align:center">Tuma ujumbe wa kwanza.</p>';const e=$('#msgs');e.scrollTop=e.scrollHeight}
 function sendMsg(m){FB.db.collection('chats').doc(cid(S.cc)).collection('messages').add(Object.assign({},m,{from:uid,ts:Date.now()})).catch(console.error);notify({type:'message',to:S.cc.uid,cid:cid(S.cc),fromName:S.me.name,text:m.k?'['+m.k+']':m.t})}
 function send(){const v=$('#mi').value.trim();if(!v)return;sendMsg({t:v});$('#mi').value=''}
-function pick(acc,k){const f=document.createElement('input');f.type='file';f.accept=acc;f.onchange=()=>{const x=f.files[0];if(!x)return;up(x,'chat').then(u=>{sendMsg({k,t:x.name,u});$('#menu').classList.add('hide')})};f.click()}
+function pick(acc,k){const f=document.createElement('input');f.type='file';f.accept=acc;f.onchange=()=>{const x=f.files[0];if(!x)return;up(x,'chat').then(u=>{if(!u)return;sendMsg({k,t:x.name,u});$('#menu').classList.add('hide')})};f.click()}
 function appMenu(){const a=['Mahali','Kalenda','Mawasiliano','Malipo'];$('#menu').innerHTML=a.map(n=>`<button class="btn o" onclick="sendMsg({k:'App',t:'${n}'})">${n}</button>`).join('')}
 
 /* ---- Calls (WebRTC, signaling kupitia Firestore) ---- */
@@ -180,7 +180,7 @@ function pVid(){
  let h='';S.posts.forEach((p,i)=>{h+=`<div class="post"><div class="h">${avatar(p.who)}<b>${esc(p.who)}</b></div>${p.src?`<video src="${p.src}" controls playsinline></video>`:'<div style="height:150px;background:var(--th);display:flex;align-items:center;justify-content:center;color:var(--mu)">Video ya mfano</div>'}<div style="padding:8px 10px">${esc(p.title)}</div></div>`;
   if(i%2===1){const a=ads[(i>>1)%2];h+=`<div class="ad"><small>${a[0]}</small><div style="font-weight:700;font-size:17px">${a[1]}</div></div>`}});
  $('#main').innerHTML=h}
-function addPost(){const f=document.createElement('input');f.type='file';f.accept='video/*';f.onchange=()=>{const x=f.files[0];if(!x)return;const t=prompt('Maelezo ya video')||x.name;up(x,'posts').then(u=>{const q={who:S.me.name,title:t,src:u,ts:Date.now()};S.posts.unshift(q);FB.db.collection('posts').add(q).catch(console.error);pVid()})};f.click()}
+function addPost(){const f=document.createElement('input');f.type='file';f.accept='video/*';f.onchange=()=>{const x=f.files[0];if(!x)return;const t=prompt('Maelezo ya video')||x.name;up(x,'posts').then(u=>{if(!u)return;const q={who:S.me.name,title:t,src:u,ts:Date.now()};S.posts.unshift(q);FB.db.collection('posts').add(q).catch(console.error);pVid()})};f.click()}
 
 /* ---- Page 4 ---- */
 function pAcc(){
@@ -199,16 +199,16 @@ async function addC(){const n=$('#cn').value.trim(),c=$('#cc').value.trim();if(!
  if(!S.contacts.some(x=>x.uid===d.uid))S.contacts.push({name:n||d.name,code:d.code,uid:d.uid});pAcc()}
 function editName(){const n=prompt('Jina jipya',S.me.name);if(n&&n.trim()){S.me.name=n.trim();pAcc()}}
 function setMedia(){const f=document.createElement('input');f.type='file';f.accept='image/*,video/*';f.onchange=()=>{const x=f.files[0];if(!x)return;const u=URL.createObjectURL(x);
- if(x.type.startsWith('video')){const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{if(v.duration>15.5){alert('Video ni ndefu ('+Math.round(v.duration)+' sekunde). Chagua video ya sekunde 15 au chini.');return}up(x,'profile').then(r=>{S.me.media=r;S.me.type='video';pAcc()})};v.src=u}
- else{up(x,'profile').then(r=>{S.me.media=r;S.me.type='image';pAcc()})}};f.click()}
+ if(x.type.startsWith('video')){const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{if(v.duration>15.5){alert('Video ni ndefu ('+Math.round(v.duration)+' sekunde). Chagua video ya sekunde 15 au chini.');return}up(x,'profile').then(r=>{if(!r)return;S.me.media=r;S.me.type='video';pAcc()})};v.src=u}
+ else{small(x).then(r=>{S.me.media=r;S.me.type='image';pAcc()})}};f.click()}
 
 /* ---- Firebase ---- */
 const firebaseConfig={apiKey:"AIzaSyCAvvJNv4jZWbSD_rjmPXrFKh2Qxcl30A4",authDomain:"project-93be748e-5db2-4856-ac5.firebaseapp.com",projectId:"project-93be748e-5db2-4856-ac5",storageBucket:"project-93be748e-5db2-4856-ac5.firebasestorage.app",messagingSenderId:"1037898544372",appId:"1:1037898544372:web:88aba05335c3e8f71e5aa1",measurementId:"G-M85E399XJ7"};
 firebase.initializeApp(firebaseConfig);
 const FB={auth:firebase.auth(),db:firebase.firestore(),st:firebase.storage()};
 let ready=false,uid=null,tmr;
-function save(){if(!ready)return;clearTimeout(tmr);tmr=setTimeout(()=>{regCode().catch(()=>{});FB.db.collection('users').doc(uid).set({me:S.me,contacts:S.contacts,groups:S.groups,updated:Date.now()}).catch(e=>console.error(e))},700)}
-const VAPID='PASTE_VAPID_KEY_HAPA'; // Firebase Console > Project settings > Cloud Messaging > Web Push certificates
+function save(){if(!ready)return;clearTimeout(tmr);tmr=setTimeout(()=>{regCode().catch(()=>{});FB.db.collection('users').doc(uid).set({me:S.me,contacts:S.contacts,groups:S.groups,updated:Date.now()}).catch(e=>{console.error(e);if(!window._se){window._se=1;alert('Taarifa hazijahifadhiwa: '+(e.code||e.message)+'. Angalia Firestore Rules.')}})},700)}
+const VAPID='BPl-MGUBWhbkDVUcXiiOrVBu4FwmpGKIWoilNJtsbw5BrVfiIJffHbgEFzRIvKISsuP7WTsFg5zh9O0m6gvu4Fo'; // Firebase Console > Project settings > Cloud Messaging > Web Push certificates
 async function notify(p){try{const t=await FB.auth.currentUser.getIdToken();fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify(p)}).catch(()=>{})}catch(e){}}
 async function enablePush(q){
  const A=m=>{if(!q)alert(m)};
@@ -223,7 +223,8 @@ async function enablePush(q){
  }catch(e){console.error(e);A('Imeshindwa kuwasha arifa: '+e.message)}}
 async function claimCode(){let c=S.me.code;for(let i=0;i<8;i++){const r=await FB.db.collection('codes').doc(c).get();if(!r.exists||r.data().uid===uid)break;c=rc()}S.me.code=c;await regCode()}
 function regCode(){return FB.db.collection('codes').doc(S.me.code).set({uid,code:S.me.code,name:S.me.name,nameLower:S.me.name.toLowerCase(),useName:!S.me.useCode})}
-async function up(f,dir){try{const r=FB.st.ref(dir+'/'+uid+'/'+Date.now()+'_'+f.name);await r.put(f);return await r.getDownloadURL()}catch(e){console.error(e);alert('Faili imeshindwa kupakia. Angalia Storage kwenye Firebase.');return URL.createObjectURL(f)}}
+async function up(f,dir){try{const r=FB.st.ref(dir+'/'+uid+'/'+Date.now()+'_'+f.name);await r.put(f);return await r.getDownloadURL()}catch(e){console.error(e);alert('Faili imeshindwa kupakia: '+(e.code||e.message)+'. Washa Storage kwenye Firebase (video na faili vinahitaji Storage).');return null}}
+function small(f){return new Promise(res=>{const i=new Image();i.onload=()=>{const n=256,c=document.createElement('canvas');c.width=c.height=n;const m=Math.min(i.width,i.height);c.getContext('2d').drawImage(i,(i.width-m)/2,(i.height-m)/2,m,m,0,0,n,n);res(c.toDataURL('image/jpeg',.8))};i.src=URL.createObjectURL(f)})}
 ['pAcc','pCom','pVid'].forEach(n=>{const f=window[n];window[n]=function(){const r=f.apply(this,arguments);save();return r}});
 (async()=>{
  $('#main').innerHTML='<p style="text-align:center;color:var(--mu)">Inapakia...</p>';
