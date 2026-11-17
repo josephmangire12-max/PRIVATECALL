@@ -16,6 +16,11 @@ service cloud.firestore {
     match /chats/{cid}/messages/{m} {
       allow read, create: if request.auth != null && request.auth.uid in cid.split('_');
     }
+    match /inbox/{to}/from/{from} {
+      allow read, delete: if request.auth != null && request.auth.uid == to;
+      allow create, update: if request.auth != null && request.auth.uid == from
+        && request.resource.data.uid == request.auth.uid;
+    }
     match /posts/{id} {
       allow read, create: if request.auth != null;
     }
