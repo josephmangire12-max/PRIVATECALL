@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const admin = require('firebase-admin');
+const { Readable } = require('stream');
 
 let pushReady = false;
 try {
@@ -109,25 +110,48 @@ app.post('/api/upload/complete', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
 });
 
-// Kiungo cha kudumu: kinaelekeza kwenye signed URL mpya (Hifadhi inatoa ya masaa 6)
+// Kiungo cha kudumu: server inapitisha faili (inasaidia Range kwa video/sauti, na ?dl=1 kupakua)
+async function signedUrl(id, force) {
+  let c = mediaCache.get(id);
+  if (!force && c && c.exp > Date.now()) return c.url;
+  const r = await fetch(HF + '/api/public/v1/files?id=' + id, { headers: { 'x-api-key': HK } });
+  if (!r.ok) return null;
+  const d = await r.json();
+  const f = d.file || (d.files && d.files[0]) || d;
+  if (!f || !f.url) return null;
+  if (mediaCache.size > 5000) mediaCache.clear();
+  mediaCache.set(id, { url: f.url, exp: Date.now() + 5 * 3600e3 });
+  return f.url;
+}
 app.get('/api/media/:id', async (req, res) => {
   try {
     const id = req.params.id;
     if (!HK || !/^[0-9a-f-]{36}$/i.test(id)) return res.sendStatus(400);
-    let c = mediaCache.get(id);
-    if (!c || c.exp < Date.now()) {
-      const r = await fetch(HF + '/api/public/v1/files?id=' + id, { headers: { 'x-api-key': HK } });
-      if (!r.ok) return res.sendStatus(404);
-      const d = await r.json();
-      const f = d.file || (d.files && d.files[0]) || d;
-      if (!f || !f.url) return res.sendStatus(404);
-      if (mediaCache.size > 5000) mediaCache.clear();
-      c = { url: f.url, exp: Date.now() + 5 * 3600e3 };
-      mediaCache.set(id, c);
+    let url = await signedUrl(id, false);
+    if (!url) return res.sendStatus(404);
+    const h = {};
+    if (req.headers.range) h.Range = req.headers.range;
+    let r = await fetch(url, { headers: h });
+    if (r.status === 400 || r.status === 401 || r.status === 403) {
+      url = await signedUrl(id, true);
+      if (!url) return res.sendStatus(404);
+      r = await fetch(url, { headers: h });
     }
-    res.set('Cache-Control', 'private, max-age=1800');
-    res.redirect(302, c.url);
-  } catch (e) { console.error(e); res.sendStatus(500); }
+    res.status(r.status);
+    ['content-type', 'content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified'].forEach(k => {
+      const x = r.headers.get(k); if (x) res.set(k, x);
+    });
+    if (r.status < 400) res.set('Cache-Control', 'private, max-age=31536000, immutable');
+    if (req.query.dl) {
+      const n = String(req.query.n || 'file').replace(/[\r\n"\\\/]+/g, '_').slice(0, 100);
+      res.set('Content-Disposition', 'attachment; filename="' + n.replace(/[^\x20-\x7e]/g, '_') + "\"; filename*=UTF-8''" + encodeURIComponent(n));
+    }
+    if (!r.body) return res.end();
+    const body = Readable.fromWeb(r.body);
+    req.on('close', () => { try { r.body.cancel(); } catch (e) {} });
+    body.on('error', () => res.end());
+    body.pipe(res);
+  } catch (e) { console.error(e); if (!res.headersSent) res.sendStatus(500); else res.end(); }
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
