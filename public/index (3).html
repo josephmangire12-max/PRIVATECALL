@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unganisha</title>
+<style>
+:root{--bg:#f2f6ff;--sf:#fff;--tx:#0b1f4d;--mu:#5a6b94;--pr:#1553e6;--pr2:#0b3aa8;--ln:#d9e3fb;--me:#1553e6;--mt:#fff;--th:#e6eeff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0a1330;--sf:#111e45;--tx:#e8eeff;--mu:#97a8d6;--ln:#22336b;--th:#1a2a5c;--pr:#4a82ff}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0a1330;--sf:#111e45;--tx:#e8eeff;--mu:#97a8d6;--ln:#22336b;--th:#1a2a5c;--pr:#4a82ff}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:15px/1.4 "Segoe UI",system-ui,Roboto,sans-serif;display:flex;justify-content:center}
+#app{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+header{background:var(--pr2);color:#fff;padding:12px 16px;font-weight:700;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+main{flex:1;overflow-y:auto;padding:12px}
+nav{display:flex;background:var(--sf);border-top:1px solid var(--ln)}
+nav button{flex:1;border:0;background:none;color:var(--mu);padding:9px 0;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+nav button.on{color:var(--pr);font-weight:700}nav svg{width:22px;height:22px}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--pr);color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:600}
+.btn.o{background:var(--th);color:var(--pr)}
+.seg{display:flex;background:var(--th);border-radius:10px;padding3px;margin-bottom:10px;padding:3px}
+.seg button{flex:1;border:0;background:none;color:var(--mu);padding:7px;border-radius:8px}
+.seg button.on{background:var(--sf);color:var(--pr);font-weight:700}
+.row{display:flex;align-items:center;gap:10px;background:var(--sf);border-radius:12px;padding:10px;margin-bottom:8px;border:1px solid var(--ln)}
+.row .t{flex:1;min-width:0}.row .s{color:var(--mu);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.av{width:42px;height:42px;border-radius:50%;background:var(--pr);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none;overflow:hidden}
+.av img,.av video{width:100%;height:100%;object-fit:cover}
+.ib{border:0;background:var(--th);color:var(--pr);width:36px;height:36px;border-radius:50%;font-size:16px}
+input[type=text]{width:100%;padding:10px;border:1px solid var(--ln);border-radius:10px;background:var(--sf);color:var(--tx);font:inherit}
+.ov{position:absolute;inset:0;background:var(--bg);z-index:5;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.ov .msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px}
+.m{max-width:78%;padding:8px 11px;border-radius:14px;background:var(--sf);border:1px solid var(--ln);align-self:flex-start;word-break:break-word}
+.m.me{align-self:flex-end;background:var(--me);color:var(--mt);border-color:var(--me)}
+.m img,.m video{max-width:100%;border-radius:8px;display:block}
+.bar{display:flex;gap:6px;padding:8px;background:var(--sf);border-top:1px solid var(--ln);align-items:center}
+.menu{display:flex;gap:6px;padding:8px;background:var(--th);flex-wrap:wrap}
+.call{background:#06143a;color:#fff;z-index:9;align-items:center;justify-content:center;gap:14px;padding:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;flex:1;max-height:60%}
+.tile{background:#13276b;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;font-weight:600}
+.tile video{width:100%;height:100%;object-fit:cover}
+.tile{position:relative}.tile small{position:absolute;bottom:6px;left:8px;background:#0008;padding:2px 6px;border-radius:6px}
+.end{background:#e5484d;color:#fff;border:0;border-radius:30px;padding:12px 28px;font-weight:700}
+.post{background:var(--sf);border:1px solid var(--ln);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.post video{width:100%;max-height:340px;background:#000;display:block}
+.post .h{display:flex;gap:8px;align-items:center;padding:8px 10px}
+.ad{background:linear-gradient(135deg,var(--pr2),var(--pr));color:#fff;padding:16px;border-radius:14px;margin-bottom:12px}
+.ad small{opacity:.8}
+h3{margin:14px 0 8px;font-size:15px}
+.code{font:700 22px/1 ui-monospace,Menlo,monospace;letter-spacing:2px;color:var(--pr)}
+.hide{display:none!important}
+.sk{position:relative;min-height:160px;background:linear-gradient(100deg,var(--th) 30%,var(--sf) 50%,var(--th) 70%);background-size:200% 100%;animation:shm 1.2s infinite linear;border-radius:10px;overflow:hidden}
+.sk::after{content:"";position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;border:3px solid var(--pr);border-top-color:transparent;border-radius:50%;animation:spn .8s linear infinite}
+.sk video,.sk img{opacity:0}.vw video,.vw img{transition:opacity .5s}
+.m .vw.sk{width:220px}
+@keyframes shm{to{background-position:-200% 0}}@keyframes spn{to{transform:rotate(360deg)}}
+@keyframes fin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.post{animation:fin .4s ease both}
+.mm{float:right;margin-left:8px;opacity:.6;cursor:pointer;padding:0 4px}
+.sheet{position:absolute;inset:0;background:#0007;z-index:40;display:flex;align-items:flex-end}
+.sc{width:100%;background:var(--sf);border-radius:16px 16px 0 0;padding:8px 10px}
+.sc button{display:block;width:100%;padding:14px;border:0;border-top:1px solid var(--ln);background:none;color:var(--tx);font-size:16px}
+.sc button:first-child{border:0}
+.bdg{background:#e5484d;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;font-weight:700;margin-left:4px}
+.prof{text-align:center;padding:10px 0}.prof .av{width:96px;height:96px;margin:0 auto 8px;font-size:34px}
+</style>
+</head>
+<body>
+<div id="app">
+<header><span id="ttl">Unganisha</span><span id="hact"></span></header>
+<main id="main"></main>
+<nav id="nav"></nav>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+<script>
+const $=(s,e=document)=>e.querySelector(s);
+const ic={c:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.2A8 8 0 1 1 21 12z"/></svg>',g:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M15 14.5a5 5 0 0 1 6.5 4.5"/></svg>',v:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg>',a:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'};
+const tabs=[['c','Mawasiliano'],['g','Jamii'],['v','Video'],['a','Akaunti']];
+const rc=()=>'CG'+Math.floor(10+Math.random()*90)+String.fromCharCode(65+Math.random()*26|0);
+const S={tab:0,sub:'chat',
+me:{name:'Mimi',code:rc(),useCode:true,media:null,type:null},
+contacts:[],
+chats:{},groups:[],
+posts:[]};
+const ini=n=>(n||'?')[0].toUpperCase();
+const idLabel=()=>S.me.useCode?S.me.code:S.me.name;
+const avatar=(n,big)=>`<div class="av">${ini(n)}</div>`;
+const myAv=()=>`<div class="av">${S.me.media?(S.me.type==='video'?`<video src="${S.me.media}" autoplay loop muted playsinline></video>`:`<img src="${S.me.media}" alt="">`):ini(S.me.name)}</div>`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function nav(){$('#nav').innerHTML=tabs.map((t,i)=>`<button class="${i===S.tab?'on':''}" onclick="S.tab=${i};render()">${ic[t[0]]}<span>${t[1]}${i===0&&tot()?` <b class="bdg">${tot()}</b>`:''}</span></button>`).join('')}
+function render(){cacheSave();nav();$('#ttl').textContent=tabs[S.tab][1];[pChat,pCom,pVid,pAcc][S.tab]()}
+
+/* ---- Page 1 ---- */
+function pChat(){
+ const m=$('#main');$('#hact').innerHTML='';
+ const calls=S.calls||[];
+ m.innerHTML=`<div class="seg"><button class="${S.sub==='chat'?'on':''}" onclick="S.sub='chat';render()">Ujumbe</button><button class="${S.sub==='call'?'on':''}" onclick="S.sub='call';render()">Kupiga</button></div>`+
+ (S.contacts.length?S.contacts.map((c,i)=>{const last=(S.chats[c.code]||[]).slice(-1)[0];
+  return S.sub==='chat'?`<div class="row" onclick="openChat(${i})">${avatar(c.name)}<div class="t"><b>${esc(c.name)}</b><div class="s">${esc((unr(c.uid)&&(S.il||{})[c.uid])||(last?(last.t||last.k):((S.il||{})[c.uid]||'Anza mazungumzo')))}</div></div>${unr(c.uid)?`<span class="bdg">${unr(c.uid)}</span>`:''}</div>`
+  :`<div class="row">${avatar(c.name)}<div class="t"><b>${esc(c.name)}</b><div class="s">${esc(c.code)}</div></div><button class="ib" title="Sauti" onclick="startCall([${i}],false)">&#9742;</button><button class="ib" title="Video" onclick="startCall([${i}],true)">&#127909;</button></div>`}).join(''):'<p class="s">Hakuna mawasiliano. Ongeza watu kwenye Akaunti.</p>')+
+ (S.sub==='call'&&calls.length?'<h3>Simu za hivi karibuni</h3>'+calls.slice().reverse().map(x=>`<div class="row"><div class="t">${esc(x)}</div></div>`).join(''):'')}
+function cid(c){return [uid,c.uid].sort().join('_')}
+function openChat(i){
+ const c=S.contacts[i];if(!c.uid){alert('Mtu huyu hana akaunti ya Unganisha.');return}
+ if(!uid){note('Inaunganisha...');setTimeout(()=>note(''),1200);return}
+ S.cur=c.code;S.cc=c;markRead(c.uid);S.chats[c.code]=S.chats[c.code]||[];
+ const o=document.createElement('div');o.className='ov';o.id='chat';
+ o.innerHTML=`<header><button class="ib" onclick="closeChat()">&#8592;</button><span style="flex:1;margin-left:10px">${esc(c.name)}</span><span style="display:flex;gap:6px"><button class="ib" onclick="startCall([${i}],false)">&#9742;</button><button class="ib" onclick="startCall([${i}],true)">&#127909;</button></span></header>
+ <div class="msgs" id="msgs"></div><div class="menu hide" id="menu"><button class="btn o" onclick="pick('image/*','Picha')">Picha</button><button class="btn o" onclick="pick('video/*','Video')">Video</button><button class="btn o" onclick="pick('*/*','Hati')">Hati</button><button class="btn o" onclick="appMenu()">Apps</button></div>
+ <div class="bar"><button class="ib" onclick="$('#menu').classList.toggle('hide')">+</button><input type="text" id="mi" placeholder="Andika ujumbe"><button class="btn" onclick="send()">Tuma</button></div>`;
+ $('#app').appendChild(o);paint();
+ S.unsub=FB.db.collection('chats').doc(cid(c)).collection('messages').orderBy('ts').limit(200).onSnapshot(sn=>{S.chats[c.code]=sn.docs.map(d=>{const x=d.data();x.id=d.id;x.me=x.from===uid;return x});if($('#msgs'))paint()});
+ $('#mi').addEventListener('keydown',e=>{if(e.key==='Enter')send()})}
+function closeChat(){S.unsub&&S.unsub();markRead(S.cc&&S.cc.uid);$('#chat')?.remove();render()}
+const vid=u=>`<div class="vw sk"><video src="${u}" controls playsinline preload="metadata" onloadeddata="this.parentNode.classList.remove('sk')" onerror="this.parentNode.classList.remove('sk')"></video></div>`;
+const img=u=>`<div class="vw sk"><img src="${u}" alt="" onload="this.parentNode.classList.remove('sk')" onerror="this.parentNode.classList.remove('sk')"></div>`;
+function body(x){if(x.deleted)return '<i style="opacity:.7">Ujumbe huu umefutwa</i>';
+ if(x.k==='Picha')return img(x.u);if(x.k==='Video')return vid(x.u);
+ if(x.k==='Hati')return `&#128196; <a href="${x.u}" target="_blank" style="color:inherit"><span data-ut>${esc(x.t)}</span></a>`;
+ if(x.k==='App')return `&#129513; ${esc(x.t)}`;
+ return `<span data-ut>${esc(x.t)}</span>`+(x.edited?' <small style="opacity:.7">(imehaririwa)</small>':'')}
+function paint(){const L=(S.chats[S.cur]||[]).filter(x=>!(x.hiddenFor||[]).includes(uid));
+ $('#msgs').innerHTML=L.length?L.map(x=>`<div class="m ${x.me?'me':''}"><span class="mm" onclick="msgMenu('${x.id}')">&#8942;</span>${body(x)}</div>`).join(''):'<p class="s" style="text-align:center">Tuma ujumbe wa kwanza.</p>';
+ const e=$('#msgs');e.scrollTop=e.scrollHeight}
+const mref=id=>FB.db.collection('chats').doc(cid(S.cc)).collection('messages').doc(id);
+function msgMenu(id){const x=(S.chats[S.cur]||[]).find(m=>m.id===id);if(!x)return;
+ const o=document.createElement('div');o.className='sheet';o.onclick=e=>{if(e.target===o)o.remove()};
+ const b=[];if(x.me&&!x.deleted&&!x.k)b.push(['Hariri',"editMsg('"+id+"')"]);
+ b.push(['Futa kwangu',"delMe('"+id+"')"]);if(x.me&&!x.deleted)b.push(['Futa kwa wote',"delAll('"+id+"')"]);b.push(['Ghairi','']);
+ o.innerHTML='<div class="sc">'+b.map(([l,f])=>`<button onclick="${f?f+';':''}this.closest('.sheet').remove()">${l}</button>`).join('')+'</div>';$('#app').appendChild(o)}
+function editMsg(id){const x=S.chats[S.cur].find(m=>m.id===id);const v=prompt('Hariri ujumbe',x.t);if(v&&v.trim()&&v!==x.t)mref(id).update({t:v.trim(),edited:true}).catch(e=>alert(e.message))}
+function delMe(id){mref(id).update({hiddenFor:firebase.firestore.FieldValue.arrayUnion(uid)}).catch(e=>alert(e.message))}
+function delAll(id){if(confirm('Futa ujumbe huu kwa wote wawili?'))mref(id).update({deleted:true,t:'',u:'',k:''}).catch(e=>alert(e.message))}
+function sendMsg(m){FB.db.collection('chats').doc(cid(S.cc)).collection('messages').add(Object.assign({},m,{from:uid,ts:Date.now()})).catch(console.error);tellInbox(S.cc.uid,m.k?'['+m.k+']':String(m.t).slice(0,60));notify({type:'message',to:S.cc.uid,cid:cid(S.cc),fromName:S.me.name,text:m.k?'['+m.k+']':m.t})}
+function send(){const v=$('#mi').value.trim();if(!v)return;sendMsg({t:v});$('#mi').value=''}
+function pick(acc,k){const f=document.createElement('input');f.type='file';f.accept=acc;f.onchange=()=>{const x=f.files[0];if(!x)return;up(x,'chat').then(u=>{if(!u)return;sendMsg({k,t:x.name,u});$('#menu').classList.add('hide')})};f.click()}
+function appMenu(){const a=['Mahali','Kalenda','Anwani','Malipo'];$('#menu').innerHTML=a.map(n=>`<button class="btn o" onclick="sendMsg({k:'App',t:'${n}'})">${n}</button>`).join('')}
+
+/* ---- Calls (WebRTC, signaling kupitia Firestore) ---- */
+const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'}]}; // ongeza TURN server hapa kwa mitandao migumu
+let CL=null;
+const nameOf=u=>(S.contacts.find(c=>c.uid===u)||{}).name||'Mtu';
+async function media(v){try{return await navigator.mediaDevices.getUserMedia({audio:true,video:!!v})}catch(e){try{return await navigator.mediaDevices.getUserMedia({audio:true})}catch(e2){return null}}}
+function startCall(ids,v){const u=ids.map(i=>S.contacts[i].uid);callUids(u,v,S.contacts[ids[0]].name)}
+async function callUids(uids,video,name){
+ uids=uids.filter(Boolean);if(CL)return;if(!uids.length){alert('Mtu huyu hana akaunti ya Unganisha.');return}
+ const ref=FB.db.collection('calls').doc();
+ await ref.set({from:uid,fromName:S.me.name,members:[uid].concat(uids),video:!!video,status:'ringing',ts:Date.now(),name:name||''});
+ uids.forEach(u=>tellInbox(u,video?'[Simu ya video]':'[Simu ya sauti]'));
+ notify({type:'call',callId:ref.id,fromName:S.me.name,video:!!video});
+ (S.calls=S.calls||[]).push((video?'Video: ':'Sauti: ')+(name||nameOf(uids[0])));
+ joinCall(ref.id,video,true,name)}
+function tile(p,label,stream,self){let t=$('#t_'+p);if(!t){t=document.createElement('div');t.className='tile';t.id='t_'+p;t.innerHTML=`<video autoplay playsinline ${self?'muted':''}></video><small></small>`;$('#cg').appendChild(t)}
+ t.querySelector('small').textContent=label;const v=t.querySelector('video');if(stream&&v.srcObject!==stream)v.srcObject=stream}
+async function joinCall(id,video,creator,name){
+ CL={id,video,creator,peers:{},unsubs:[],names:{},local:await media(video)};
+ const ref=FB.db.collection('calls').doc(id);
+ const o=document.createElement('div');o.className='ov call';o.id='call';
+ o.innerHTML=`<div>${esc(name||'Simu')} &middot; <span id="tm">0:00</span></div><div class="grid" id="cg"></div><button class="end" onclick="endCall()">Maliza</button>`;
+ $('#app').appendChild(o);tile(uid,'Mimi',CL.local,true);
+ let s=0;CL.tm=setInterval(()=>{s++;const t=$('#tm');if(t)t.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')},1000);
+ const jt=Date.now();await ref.collection('joined').doc(uid).set({t:jt,name:S.me.name});
+ if(creator){const miss=()=>{if(CL&&CL.id===id&&!CL.got){note('Hapatikani kwa sasa');setTimeout(()=>note(''),3500);endCall()}};
+  CL.ringT=setTimeout(miss,60000);
+  CL.unsubs.push(ref.onSnapshot(d=>{const x=d.data()||{},dc=(x.declined||[]).length;if(dc&&dc>=(x.members||[]).length-1)miss()}))}
+ CL.unsubs.push(ref.collection('joined').onSnapshot(sn=>sn.docChanges().forEach(ch=>{
+  const p=ch.doc.id;if(p===uid||!CL)return;const d=ch.doc.data();
+  if(ch.type==='added'){CL.got=true;clearTimeout(CL.ringT);CL.names[p]=d.name;if(d.t>jt||(d.t===jt&&p>uid))connect(p)}
+  if(ch.type==='removed')drop(p)})));
+ CL.unsubs.push(ref.collection('signals').where('to','==',uid).onSnapshot(sn=>sn.docChanges().forEach(ch=>{if(ch.type==='added')onSig(ch.doc.data())})))}
+function peer(p){if(CL.peers[p])return CL.peers[p];
+ const pc=new RTCPeerConnection(ICE),o={pc,q:[]};CL.peers[p]=o;
+ if(CL.local)CL.local.getTracks().forEach(t=>pc.addTrack(t,CL.local));
+ else{pc.addTransceiver('audio',{direction:'recvonly'});if(CL.video)pc.addTransceiver('video',{direction:'recvonly'})}
+ pc.onicecandidate=e=>{if(e.candidate)sig(p,'ice',e.candidate.toJSON())};
+ pc.ontrack=e=>tile(p,CL.names[p]||nameOf(p),e.streams[0]);
+ return o}
+function sig(to,type,data){FB.db.collection('calls').doc(CL.id).collection('signals').add({from:uid,to,type,data:JSON.stringify(data),ts:Date.now()})}
+async function connect(p){const o=peer(p);const d=await o.pc.createOffer();await o.pc.setLocalDescription(d);sig(p,'offer',d)}
+function flush(o){o.q.forEach(c=>o.pc.addIceCandidate(c).catch(()=>{}));o.q=[]}
+async function onSig(m){if(!CL)return;const o=peer(m.from),d=JSON.parse(m.data);
+ if(m.type==='offer'){await o.pc.setRemoteDescription(d);flush(o);const a=await o.pc.createAnswer();await o.pc.setLocalDescription(a);sig(m.from,'answer',a)}
+ else if(m.type==='answer'){await o.pc.setRemoteDescription(d);flush(o)}
+ else{if(o.pc.remoteDescription)o.pc.addIceCandidate(d).catch(()=>{});else o.q.push(d)}}
+function drop(p){const o=CL.peers[p];if(o){o.pc.close();delete CL.peers[p]}$('#t_'+p)?.remove();if(!Object.keys(CL.peers).length)endCall()}
+async function endCall(){if(!CL)return;const c=CL;CL=null;clearInterval(c.tm);clearTimeout(c.ringT);c.unsubs.forEach(f=>f());
+ Object.values(c.peers).forEach(o=>o.pc.close());if(c.local)c.local.getTracks().forEach(t=>t.stop());
+ $('#call')?.remove();const ref=FB.db.collection('calls').doc(c.id);
+ try{await ref.collection('joined').doc(uid).delete();if(c.creator)await ref.update({status:'ended'})}catch(e){}}
+/* ---- Inbox: mtu mpya akikutumia ujumbe au kukupigia, anaingia kwenye mawasiliano yako moja kwa moja ---- */
+const unr=u=>Math.max(0,((S.n||{})[u]||0)-((S.rd||{})[u]||0));
+const tot=()=>S.contacts.reduce((a,c)=>a+(c.uid?unr(c.uid):0),0);
+function markRead(u){if(!u)return;S.rd=S.rd||{};const n=(S.n||{})[u]||0;if(S.rd[u]!==n){S.rd[u]=n;save()}}
+function tellInbox(to,last){if(!to||!uid)return;FB.db.collection('inbox').doc(to).collection('from').doc(uid).set({uid,name:S.me.name,code:S.me.code,last:last||'',ts:Date.now(),n:firebase.firestore.FieldValue.increment(1)},{merge:true}).catch(console.error)}
+function listenInbox(){FB.db.collection('inbox').doc(uid).collection('from').onSnapshot(sn=>{
+ S.il=S.il||{};S.n=S.n||{};let added=false;
+ sn.docs.forEach(d=>{const x=d.data();if(!x.uid||x.uid===uid)return;S.il[x.uid]=x.last||'';S.n[x.uid]=x.n||0;
+  if(!S.contacts.some(c=>c.uid===x.uid)){S.contacts.push({name:x.name,code:x.code,uid:x.uid});added=true}});
+ if(added)save();
+ if(S.cc&&$('#chat'))markRead(S.cc.uid);
+ nav();
+ if(S.tab===0&&!$('#chat')&&!$('#call')&&!$('#ring'))pChat()})}
+function rmC(i){const c=S.contacts[i];if(c&&c.uid)FB.db.collection('inbox').doc(uid).collection('from').doc(c.uid).delete().catch(()=>{});S.contacts.splice(i,1);pAcc()}
+function declineRing(){const r=$('#ring');if(!r)return;FB.db.collection('calls').doc(r.dataset.id).update({declined:firebase.firestore.FieldValue.arrayUnion(uid)}).catch(()=>{});r.remove()}
+function listenCalls(){FB.db.collection('calls').where('members','array-contains',uid).onSnapshot(sn=>sn.docChanges().forEach(ch=>{
+ if(ch.type==='modified'){const r0=$('#ring');if(r0&&r0.dataset.id===ch.doc.id&&ch.doc.data().status!=='ringing')r0.remove();return}
+ if(ch.type!=='added')return;const d=ch.doc.data();
+ if(d.from===uid||d.status!=='ringing'||Date.now()-d.ts>60000||CL||$('#ring'))return;
+ const r=document.createElement('div');r.className='ov call';r.id='ring';r.dataset.id=ch.doc.id;
+ r.innerHTML=`<div class="av" style="width:80px;height:80px;font-size:30px">${ini(d.fromName)}</div><div style="font-size:18px">${esc(d.fromName)} anapiga ${d.video?'video':'sauti'}</div><div style="display:flex;gap:12px"><button class="end" onclick="declineRing()">Kataa</button><button class="end" style="background:#1fa35b" id="ans">Jibu</button></div>`;
+ $('#app').appendChild(r);$('#ans').onclick=()=>{r.remove();joinCall(ch.doc.id,d.video,false,d.fromName)};
+ setTimeout(()=>r.remove(),60000)}))}
+
+/* ---- Page 2 ---- */
+function pCom(){
+ $('#hact').innerHTML='';
+ $('#main').innerHTML=`<input type="text" id="gn" placeholder="Jina la kundi jipya" style="margin-bottom:8px">`+(S.contacts.length?`<div class="s" style="color:var(--mu);margin-bottom:6px">Chagua hadi watu watatu (jumla wanne pamoja na wewe)</div>`+S.contacts.map((c,i)=>`<label class="row"><input type="checkbox" class="gm" value="${i}" onchange="if(document.querySelectorAll('.gm:checked').length>3)this.checked=false"><div class="t"><b>${esc(c.name)}</b></div></label>`).join('')+`<button class="btn" onclick="mkGroup()" style="width:100%;margin-bottom:12px">Unda kundi</button>`:'<p class="s" style="color:var(--mu)">Ongeza watu kwenye Akaunti kwanza.</p>')+
+ S.groups.map((g,gi)=>`<div class="row"><div class="av">${ini(g.name)}</div><div class="t"><b>${esc(g.name)}</b><div class="s">${g.members.length+1} washiriki</div></div><button class="ib" onclick="gCall(${gi},false)">&#9742;</button><button class="ib" onclick="gCall(${gi},true)">&#127909;</button></div>`).join('')}
+function mkGroup(){const n=$('#gn').value.trim();const u=[...document.querySelectorAll('.gm:checked')].map(x=>S.contacts[+x.value].uid).filter(Boolean);if(!n||!u.length){alert('Andika jina na uchague mtu.');return}S.groups.push({name:n,members:u});pCom()}
+function gCall(gi,v){const g=S.groups[gi];callUids(g.members,v,g.name)}
+
+/* ---- Page 3 ---- */
+function pVid(){
+ $('#hact').innerHTML='<button class="btn o" onclick="addPost()">+ Weka video</button>';
+ const ads=[['Tangazo','Lipa kwa simu, haraka na salama'],['Tangazo','Biashara yako ionekane hapa']];
+ let h='';
+ if(!S.pl&&!S.posts.length)h='<div class="post"><div class="vw sk" style="height:220px"></div></div>'.repeat(2);
+ else if(!S.posts.length)h='<p class="s" style="text-align:center;color:var(--mu)">Hakuna video bado. Weka ya kwanza!</p>';
+ S.posts.forEach((p,i)=>{h+=`<div class="post"><div class="h">${avatar(p.who)}<b>${esc(p.who)}</b></div>${p.src?vid(p.src):''}<div style="padding:8px 10px">${esc(p.title)}</div></div>`;
+  if(i%2===1){const a=ads[(i>>1)%2];h+=`<div class="ad"><small>${a[0]}</small><div style="font-weight:700;font-size:17px">${a[1]}</div></div>`}});
+ $('#main').innerHTML=h}
+function addPost(){const f=document.createElement('input');f.type='file';f.accept='video/*';f.onchange=()=>{const x=f.files[0];if(!x)return;const t=prompt('Maelezo ya video')||x.name;up(x,'posts').then(u=>{if(!u)return;const q={who:S.me.name,title:t,src:u,ts:Date.now()};S.posts.unshift(q);FB.db.collection('posts').add(q).catch(console.error);pVid()})};f.click()}
+
+/* ---- Page 4 ---- */
+function pAcc(){
+ $('#hact').innerHTML='<small style="opacity:.7">v3 Hifadhi</small>';
+ $('#main').innerHTML=`<div class="prof">${myAv()}<b style="font-size:18px">${esc(S.me.name)}</b><div class="code">${esc(S.me.code)}</div><div class="s" style="color:var(--mu)">Unatambulika kwa: ${S.me.useCode?'Code':'Jina'}</div>
+ <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap"><button class="btn" onclick="setMedia()">Weka picha/video</button>${S.me.media?'<button class="btn o" onclick="S.me.media=null;pAcc()">Ondoa</button>':''}<button class="btn o" onclick="editName()">Hariri jina</button></div><div class="s" style="color:var(--mu);margin-top:6px">Video ya profile: sekunde 15 au chini.</div></div>
+ <h3>Lugha / Language</h3><div class="seg"><button class="${LANG==='sw'?'on':''}" onclick="setLang('sw')">Kiswahili</button><button class="${LANG==='en'?'on':''}" onclick="setLang('en')">English</button></div>
+ <h3>Arifa</h3><button class="btn o" onclick="enablePush()">${('Notification' in window&&Notification.permission==='granted')?'Arifa zimewashwa (sasisha kifaa hiki)':'Washa arifa'}</button>
+ <h3>Njia ya utambulisho</h3><div class="seg"><button class="${S.me.useCode?'on':''}" onclick="S.me.useCode=true;pAcc()">Tumia Code</button><button class="${!S.me.useCode?'on':''}" onclick="S.me.useCode=false;pAcc()">Tumia jina</button></div>
+ <h3>Ongeza mtu mpya</h3><div style="display:flex;gap:8px;flex-direction:column"><input type="text" id="cn" placeholder="Jina la kumhifadhi (hiari)"><input type="text" id="cc" placeholder="Code au jina la mtu (mfano CG23S)"><button class="btn" onclick="addC()">Hifadhi mtu</button></div>
+ <h3>Waliohifadhiwa (${S.contacts.length})</h3>`+S.contacts.map((c,i)=>`<div class="row">${avatar(c.name)}<div class="t"><b>${esc(c.name)}</b><div class="s">${esc(c.code)}</div></div><button class="ib" onclick="rmC(${i})">&#10005;</button></div>`).join('')}
+async function addC(){const n=$('#cn').value.trim(),c=$('#cc').value.trim();if(!c)return;
+ const r=await FB.db.collection('codes').doc(c.toUpperCase()).get();let d=r.exists?r.data():null;
+ if(!d){const q=await FB.db.collection('codes').where('nameLower','==',c.toLowerCase()).where('useName','==',true).limit(1).get();if(!q.empty)d=q.docs[0].data()}
+ if(!d){alert('Hakuna mtu mwenye code au jina hilo.');return}
+ if(d.uid===uid){alert('Huyo ni wewe.');return}
+ if(!S.contacts.some(x=>x.uid===d.uid))S.contacts.push({name:n||d.name,code:d.code,uid:d.uid});pAcc()}
+function editName(){const n=prompt('Jina jipya',S.me.name);if(n&&n.trim()){S.me.name=n.trim();pAcc()}}
+function setMedia(){const f=document.createElement('input');f.type='file';f.accept='image/*,video/*';f.onchange=()=>{const x=f.files[0];if(!x)return;const u=URL.createObjectURL(x);
+ if(x.type.startsWith('video')){const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{if(v.duration>15.5){alert('Video ni ndefu ('+Math.round(v.duration)+' sekunde). Chagua video ya sekunde 15 au chini.');return}up(x,'profile').then(r=>{if(!r)return;S.me.media=r;S.me.type='video';pAcc()})};v.onerror=()=>alert('Kivinjari hakiwezi kusoma video hii. Jaribu video nyingine (MP4).');v.src=u}
+ else{small(x).then(r=>{S.me.media=r;S.me.type='image';pAcc()})}};f.click()}
+
+/* ---- Firebase ---- */
+const firebaseConfig={apiKey:"AIzaSyCAvvJNv4jZWbSD_rjmPXrFKh2Qxcl30A4",authDomain:"project-93be748e-5db2-4856-ac5.firebaseapp.com",projectId:"project-93be748e-5db2-4856-ac5",storageBucket:"project-93be748e-5db2-4856-ac5.firebasestorage.app",messagingSenderId:"1037898544372",appId:"1:1037898544372:web:88aba05335c3e8f71e5aa1",measurementId:"G-M85E399XJ7"};
+firebase.initializeApp(firebaseConfig);
+const FB={auth:firebase.auth(),db:firebase.firestore(),st:firebase.storage()};
+FB.db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+let ready=false,uid=null,tmr;
+function save(){cacheSave();if(!ready)return;clearTimeout(tmr);tmr=setTimeout(()=>{regCode().catch(()=>{});FB.db.collection('users').doc(uid).set({me:S.me,contacts:S.contacts,groups:S.groups,rd:S.rd||{},updated:Date.now()}).catch(e=>{console.error(e);if(!window._se){window._se=1;alert('Taarifa hazijahifadhiwa: '+(e.code||e.message)+'. Angalia Firestore Rules.')}})},700)}
+const VAPID='BPl-MGUBWhbkDVUcXiiOrVBu4FwmpGKIWoilNJtsbw5BrVfiIJffHbgEFzRIvKISsuP7WTsFg5zh9O0m6gvu4Fo'; // Firebase Console > Project settings > Cloud Messaging > Web Push certificates
+async function notify(p){try{const t=await FB.auth.currentUser.getIdToken();fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify(p)}).catch(()=>{})}catch(e){}}
+async function enablePush(q){
+ const A=m=>{if(!q)alert(m)};
+ try{
+  if(!('Notification' in window)||!('serviceWorker' in navigator)||!firebase.messaging.isSupported()){A('Kivinjari hiki hakiungi arifa. Kwenye iPhone, ongeza app kwenye Home Screen kwanza.');return}
+  if(VAPID.startsWith('PASTE')){A('VAPID key haijawekwa kwenye index.html.');return}
+  if(await Notification.requestPermission()!=='granted'){A('Arifa zimekataliwa. Ziruhusu kwenye settings za kivinjari.');return}
+  const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  const tk=await firebase.messaging().getToken({vapidKey:VAPID,serviceWorkerRegistration:reg});
+  await FB.db.collection('users').doc(uid).collection('tokens').doc(tk).set({ts:Date.now()});
+  if(!q){alert('Arifa zimewashwa.');pAcc()}
+ }catch(e){console.error(e);A('Imeshindwa kuwasha arifa: '+e.message)}}
+async function claimCode(){let c=S.me.code;for(let i=0;i<8;i++){const r=await FB.db.collection('codes').doc(c).get();if(!r.exists||r.data().uid===uid)break;c=rc()}S.me.code=c;await regCode()}
+function regCode(){return FB.db.collection('codes').doc(S.me.code).set({uid,code:S.me.code,name:S.me.name,nameLower:S.me.name.toLowerCase(),useName:!S.me.useCode})}
+function note(m){let n=$('#note');if(!n){n=document.createElement('div');n.id='note';n.style.cssText='position:absolute;left:50%;transform:translateX(-50%);top:calc(60px + env(safe-area-inset-top,0px));background:#0b3aa8;color:#fff;padding:10px 18px;border-radius:22px;z-index:30;font-weight:700;box-shadow:0 4px 14px #0006';$('#app').appendChild(n)}n.textContent=m;n.style.display=m?'block':'none'}
+async function up(f,dir){
+ if(f.size>100*1024*1024){alert('Faili ni kubwa mno (kikomo 100 MB).');return null}
+ note('Inapakia 0%');
+ try{
+  const t=await FB.auth.currentUser.getIdToken();
+  const H={'Content-Type':'application/json',Authorization:'Bearer '+t};
+  const pr=await fetch('/api/upload/prepare',{method:'POST',headers:H,body:JSON.stringify({name:f.name,size:f.size,mime:f.type||'application/octet-stream'})});
+  const p=await pr.json();if(!pr.ok)throw new Error(p.error||('prepare '+pr.status));
+  const hd=Object.assign({'Content-Type':p.mime_type||f.type||'application/octet-stream'},p.upload_headers||{});
+  await new Promise((ok,no)=>{const x=new XMLHttpRequest();x.open('PUT',p.upload_url);Object.keys(hd).forEach(k=>x.setRequestHeader(k,hd[k]));x.upload.onprogress=e=>{if(e.lengthComputable)note('Inapakia '+Math.round(e.loaded/e.total*100)+'%')};x.onerror=()=>no(new Error('Mtandao umekatika'));x.onload=()=>x.status>=200&&x.status<300?ok():no(new Error('Upakiaji umeshindikana ('+x.status+')'));x.send(f)});
+  note('Inahifadhi...');
+  const cr=await fetch('/api/upload/complete',{method:'POST',headers:H,body:JSON.stringify({upload_id:p.upload_id})});
+  const c=await cr.json();if(!cr.ok)throw new Error(c.error||('complete '+cr.status));
+  note('Imepakiwa \u2713');setTimeout(()=>note(''),1500);return c.url;
+ }catch(e){console.error(e);note('');alert('Faili imeshindwa kupakia: '+e.message);return null}}
+function small(f){return new Promise(res=>{const i=new Image();i.onload=()=>{const n=256,c=document.createElement('canvas');c.width=c.height=n;const m=Math.min(i.width,i.height);c.getContext('2d').drawImage(i,(i.width-m)/2,(i.height-m)/2,m,m,0,0,n,n);res(c.toDataURL('image/jpeg',.8))};i.src=URL.createObjectURL(f)})}
+['pAcc','pCom','pVid'].forEach(n=>{const f=window[n];window[n]=function(){const r=f.apply(this,arguments);save();return r}});
+let CU=null;
+try{const c=JSON.parse(localStorage.getItem('uc')||'null');if(c){CU=c.u||null;Object.assign(S.me,c.me||{});S.contacts=c.contacts||[];S.groups=c.groups||[];S.rd=c.rd||{};S.il=c.il||{};S.n=c.n||{};S.posts=c.posts||[]}}catch(e){}
+function cacheSave(){try{localStorage.setItem('uc',JSON.stringify({u:uid||CU,me:S.me,contacts:S.contacts,groups:S.groups,rd:S.rd||{},il:S.il||{},n:S.n||{},posts:S.posts.filter(p=>p.ts).slice(0,20)}))}catch(e){}}
+
+/* ---- Lugha / Language ---- */
+let LANG=localStorage.getItem('lang')||((navigator.language||'sw').toLowerCase().startsWith('en')?'en':'sw');
+document.documentElement.lang=LANG;
+const EN={'Mawasiliano':'Chats','Jamii':'Community','Akaunti':'Account','Ujumbe':'Messages','Kupiga':'Calls','Anza mazungumzo':'Start a conversation','Hakuna mawasiliano. Ongeza watu kwenye Akaunti.':'No contacts yet. Add people in Account.','Simu za hivi karibuni':'Recent calls','Sauti':'Audio','Andika ujumbe':'Type a message','Tuma':'Send','Picha':'Photo','Hati':'Document','Tuma ujumbe wa kwanza.':'Send the first message.','Mahali':'Location','Kalenda':'Calendar','Anwani':'Contacts','Malipo':'Payments','Maliza':'End','Simu':'Call','Mimi':'Me','Kataa':'Decline','Jibu':'Answer','Mtu':'Someone','Jina la kundi jipya':'New group name','Chagua hadi watu watatu (jumla wanne pamoja na wewe)':'Choose up to three people (four including you)','Unda kundi':'Create group','Ongeza watu kwenye Akaunti kwanza.':'Add people in Account first.','+ Weka video':'+ Post video','Maelezo ya video':'Video description','Tangazo':'Ad','Lipa kwa simu, haraka na salama':'Pay by phone, fast and safe','Biashara yako ionekane hapa':'Show your business here','Hakuna video bado. Weka ya kwanza!':'No videos yet. Post the first one!','Weka picha/video':'Set photo/video','Ondoa':'Remove','Hariri jina':'Edit name','Video ya profile: sekunde 15 au chini.':'Profile video: 15 seconds or less.','Unatambulika kwa: Code':'Identified by: Code','Unatambulika kwa: Jina':'Identified by: Name','Arifa':'Notifications','Washa arifa':'Enable notifications','Arifa zimewashwa (sasisha kifaa hiki)':'Notifications on (refresh this device)','Njia ya utambulisho':'Identification method','Tumia Code':'Use Code','Tumia jina':'Use name','Ongeza mtu mpya':'Add new person','Jina la kumhifadhi (hiari)':'Name to save (optional)','Code au jina la mtu (mfano CG23S)':'Person code or name (e.g. CG23S)','Hifadhi mtu':'Save person','Hariri':'Edit','Futa kwangu':'Delete for me','Futa kwa wote':'Delete for everyone','Ghairi':'Cancel','Ujumbe huu umefutwa':'This message was deleted','(imehaririwa)':'(edited)','Hariri ujumbe':'Edit message','Futa ujumbe huu kwa wote wawili?':'Delete this message for both of you?','Hapatikani kwa sasa':'Unavailable right now','Inaunganisha...':'Connecting...','Inahifadhi...':'Saving...','Imepakiwa ✓':'Uploaded ✓','Jina jipya':'New name','Mtu huyu hana akaunti ya Unganisha.':'This person has no Unganisha account.','Faili ni kubwa mno (kikomo 100 MB).':'File is too large (100 MB limit).','Kivinjari hakiwezi kusoma video hii. Jaribu video nyingine (MP4).':'The browser cannot read this video. Try another (MP4).','Hakuna mtu mwenye code au jina hilo.':'No one has that code or name.','Huyo ni wewe.':'That is you.','Andika jina na uchague mtu.':'Enter a name and choose someone.','Kivinjari hiki hakiungi arifa. Kwenye iPhone, ongeza app kwenye Home Screen kwanza.':'This browser does not support notifications. On iPhone, add the app to the Home Screen first.','VAPID key haijawekwa kwenye index.html.':'VAPID key is not set in index.html.','Arifa zimekataliwa. Ziruhusu kwenye settings za kivinjari.':'Notifications were denied. Allow them in browser settings.','Arifa zimewashwa.':'Notifications enabled.'};
+const EP=[[/^Inapakia (\d+)%$/,'Uploading $1%'],[/^Waliohifadhiwa \((\d+)\)$/,'Saved ($1)'],[/^(\d+) washiriki$/,'$1 members'],[/^(.*) anapiga (video|sauti)$/,(m,a,b)=>a+(b==='video'?' is video calling':' is calling')],[/^Sauti: (.*)$/,'Audio: $1'],[/^Faili imeshindwa kupakia: (.*)$/,'Upload failed: $1'],[/^Firebase haijaunganishwa: (.*)$/,'Firebase not connected: $1'],[/^Taarifa hazijahifadhiwa: (.*)\. Angalia Firestore Rules\.$/,'Data not saved: $1. Check Firestore Rules.'],[/^Imeshindwa kuwasha arifa: (.*)$/,'Could not enable notifications: $1'],[/^Video ni ndefu \((\d+) sekunde\)\. Chagua video ya sekunde 15 au chini\.$/,'Video is too long ($1 seconds). Choose one of 15 seconds or less.'],[/^(\S+) (Mahali|Kalenda|Anwani|Malipo)$/,(m,e,a)=>e+' '+({Mahali:'Location',Kalenda:'Calendar',Anwani:'Contacts',Malipo:'Payments'})[a]],[/^\[(.+)\]$/,(m,a)=>'['+({Picha:'Photo',Hati:'Document','Simu ya video':'Video call','Simu ya sauti':'Audio call'}[a]||a)+']']];
+function tr(s){if(LANG!=='en'||!s)return s;const k=String(s).trim();if(EN[k])return s.replace(k,EN[k]);for(const [r,v] of EP)if(r.test(k))return s.replace(k,k.replace(r,v));return s}
+const _al=window.alert.bind(window),_pr=window.prompt.bind(window),_cf=window.confirm.bind(window);
+window.alert=m=>_al(tr(String(m)));window.prompt=(m,d)=>_pr(tr(String(m)),d);window.confirm=m=>_cf(tr(String(m)));
+function ta(el){['placeholder','title'].forEach(a=>{const v=el.getAttribute&&el.getAttribute(a);if(v){const t=tr(v);if(t!==v)el.setAttribute(a,t)}})}
+function tn(n){if(n.parentNode&&n.parentNode.closest&&n.parentNode.closest('[data-ut]'))return;const t=tr(n.nodeValue);if(t!==n.nodeValue)n.nodeValue=t}
+function tx(root){if(LANG!=='en')return;root=root||document.body;if(root.nodeType===3)return tn(root);ta(root);const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);let n;while(n=w.nextNode()){n.nodeType===3?tn(n):ta(n)}}
+new MutationObserver(m=>{if(LANG==='en')m.forEach(x=>x.addedNodes.forEach(a=>tx(a)))}).observe(document.body,{childList:true,subtree:true});
+function setLang(l){LANG=l;try{localStorage.setItem('lang',l)}catch(e){}document.documentElement.lang=l;render()}
+
+(async()=>{
+ tx();render();
+ try{
+  const c=await FB.auth.signInAnonymously();uid=c.user.uid;if(CU&&CU!==uid){S.contacts=[];S.groups=[];S.rd={};S.il={};S.n={};S.posts=[]}
+  const d=await FB.db.collection('users').doc(uid).get();
+  if(d.exists){const v=d.data();Object.assign(S.me,v.me||{});S.contacts=v.contacts||S.contacts;S.groups=v.groups||S.groups;S.rd=v.rd||{}}
+  const ps=await FB.db.collection('posts').orderBy('ts','desc').limit(30).get();
+  S.posts=ps.docs.map(x=>x.data());
+  await claimCode();listenCalls();listenInbox();
+  if('Notification' in window&&Notification.permission==='granted')enablePush(true);
+ }catch(e){console.error(e);if(navigator.onLine)alert('Firebase haijaunganishwa: '+e.message)}
+ S.pl=true;ready=!!uid;render();save();
+})();
+</script>
+</body>
+</html>
