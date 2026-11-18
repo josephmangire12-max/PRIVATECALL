@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const admin = require('firebase-admin');
 const { Readable } = require('stream');
+const linkcheck = require('./linkcheck');
 
 let pushReady = false;
 try {
@@ -15,10 +16,14 @@ try {
 // ---- Hifadhi (hifadhi ya faili) ----
 const HF = (process.env.HIFADHI_BASE_URL || 'https://safi-space-manager.lovable.app').replace(/\/$/, '');
 const HK = process.env.HIFADHI_API_KEY; // SIRI: weka Railway Variables tu
-const MAX_BYTES = 100 * 1024 * 1024;
+const MAX_BYTES = 300 * 1024 * 1024;
+const hmsg = (s, d) => d.error || d.message || (s === 401 ? 'Server haijaunganishwa vizuri na Hifadhi (angalia HIFADHI_API_KEY)' : s === 409 ? 'Hifadhi imejaa au kuna mgongano wa faili' : s === 413 ? 'Faili ni kubwa mno' : s === 422 ? 'Hifadhi imekataa faili hili' : s === 503 ? 'Hifadhi haipatikani kwa sasa, jaribu tena' : 'Hifadhi imekataa ombi (' + s + ')');
+const hitsL = new Map();
+const limitedL = uid => { const n = Date.now(), a = (hitsL.get(uid) || []).filter(x => n - x < 3600e3); a.push(n); hitsL.set(uid, a); return a.length > 150; };
+const linkCache = new Map();
 const hits = new Map();
 const mediaCache = new Map();
-const limited = uid => { const n = Date.now(), a = (hits.get(uid) || []).filter(x => n - x < 3600e3); a.push(n); hits.set(uid, a); return a.length > 60; };
+const limited = uid => { const n = Date.now(), a = (hits.get(uid) || []).filter(x => n - x < 3600e3); a.push(n); hits.set(uid, a); return a.length > 200; };
 async function authed(req, res) {
   try {
     const t = (req.headers.authorization || '').replace('Bearer ', '');
@@ -87,14 +92,14 @@ app.post('/api/upload/prepare', async (req, res) => {
     if (limited(uid)) return res.status(429).json({ error: 'Umepakia mara nyingi, jaribu baadaye' });
     const { name, size, mime } = req.body || {};
     if (!name || !Number.isInteger(size) || size <= 0 || size > MAX_BYTES)
-      return res.status(400).json({ error: 'Faili si sahihi au ni kubwa mno (kikomo 100 MB)' });
+      return res.status(400).json({ error: 'Faili si sahihi au ni kubwa mno (kikomo 300 MB)' });
     const r = await fetch(HF + '/api/public/v1/files', {
       method: 'POST',
       headers: { 'x-api-key': HK, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: String(name).slice(0, 120), size_bytes: size, mime_type: String(mime || 'application/octet-stream') })
     });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) return res.status(r.status === 401 ? 502 : r.status).json({ error: d.error || 'Hifadhi imekataa ombi' });
+    if (!r.ok) return res.status(r.status === 401 ? 502 : r.status).json({ error: hmsg(r.status, d) });
     res.json({ upload_id: d.upload_id, upload_url: d.upload_url, upload_headers: d.upload_headers, mime_type: d.mime_type || mime });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
 });
@@ -105,10 +110,33 @@ app.post('/api/upload/complete', async (req, res) => {
     const uid = await authed(req, res); if (!uid) return;
     const id = String((req.body || {}).upload_id || '');
     if (!/^[\w-]{8,64}$/.test(id)) return res.status(400).json({ error: 'upload_id si sahihi' });
-    const r = await fetch(HF + '/api/public/v1/uploads/' + id, { method: 'POST', headers: { 'x-api-key': HK } });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok || !d.file) return res.status(r.status || 502).json({ error: d.error || 'Imeshindikana kuhifadhi taarifa' });
+    let r, d;
+    for (let a = 0; a < 3; a++) {
+      r = await fetch(HF + '/api/public/v1/uploads/' + id, { method: 'POST', headers: { 'x-api-key': HK } });
+      d = await r.json().catch(() => ({}));
+      if (r.ok && d.file) break;
+      if (r.status !== 409 && r.status < 500) break;
+      await new Promise(x => setTimeout(x, 1000 * (a + 1)));
+    }
+    if (!r.ok || !d.file) return res.status(r.ok ? 502 : r.status).json({ error: hmsg(r.status, d) });
     res.json({ id: d.file.id, name: d.file.name, category: d.file.category, url: '/api/media/' + d.file.id });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
+});
+
+// Ukaguzi wa viungo vinavyotumwa kwenye chat
+app.post('/api/link/check', async (req, res) => {
+  try {
+    const uid = await authed(req, res); if (!uid) return;
+    if (limitedL(uid)) return res.status(429).json({ error: 'Maombi mengi sana, jaribu baadaye' });
+    let u;
+    try { u = new URL(String((req.body || {}).url || '').trim().slice(0, 2000)); } catch (e) { return res.status(400).json({ error: 'Kiungo si sahihi' }); }
+    if (!/^https?:$/.test(u.protocol)) return res.status(400).json({ error: 'Kiungo si sahihi' });
+    const hit = linkCache.get(u.href);
+    if (hit && hit.exp > Date.now()) return res.json(hit.v);
+    const v = await linkcheck.check(u.href, process.env.SAFE_BROWSING_KEY);
+    if (linkCache.size > 2000) linkCache.clear();
+    linkCache.set(u.href, { v, exp: Date.now() + 3600e3 });
+    res.json(v);
   } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
 });
 
