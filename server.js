@@ -122,7 +122,7 @@ async function signedUrl(id, force) {
   const f = d.file || (d.files && d.files[0]) || d;
   if (!f || !f.url) return null;
   if (mediaCache.size > 5000) mediaCache.clear();
-  mediaCache.set(id, { url: f.url, exp: Date.now() + 5 * 3600e3 });
+  mediaCache.set(id, { url: f.url, exp: Date.now() + 4 * 3600e3 });
   return f.url;
 }
 app.get('/api/media/:id', async (req, res) => {
