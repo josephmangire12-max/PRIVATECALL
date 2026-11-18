@@ -58,6 +58,8 @@ app.post('/api/notify', async (req, res) => {
     const body = type === 'call' ? 'Fungua Unganisha kujibu' : String(text || 'Ujumbe mpya').slice(0, 120);
 
     for (const u of targets) {
+      const ud = (await db.collection('users').doc(u).get()).data() || {};
+      if ((ud.muted || []).includes(me.uid) || (ud.blocked || []).includes(me.uid)) continue;
       const snap = await db.collection('users').doc(u).collection('tokens').get();
       const tokens = snap.docs.map(d => d.id);
       if (!tokens.length) continue;
