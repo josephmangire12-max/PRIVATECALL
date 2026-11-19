@@ -4,6 +4,10 @@ const admin = require('firebase-admin');
 const { Readable } = require('stream');
 const linkcheck = require('./linkcheck');
 
+// Usiache server ianguke kwa hitilafu zisizotarajiwa (mfano mteja kukata muunganisho)
+process.on('unhandledRejection', e => console.error('unhandledRejection:', e && e.message));
+process.on('uncaughtException', e => console.error('uncaughtException:', e && e.message));
+
 let pushReady = false;
 try {
   admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
@@ -44,9 +48,9 @@ app.post('/api/notify', async (req, res) => {
   try {
     const idToken = (req.headers.authorization || '').replace('Bearer ', '');
     const me = await admin.auth().verifyIdToken(idToken);
-    const { type, to, cid, callId, fromName, text, video } = req.body || {};
+    const { type, to, cid, callId, fromName, text, video, gid } = req.body || {};
     const db = admin.firestore();
-    let targets = [];
+    let targets = [], gname = '';
     if (type === 'message') {
       const ids = String(cid || '').split('_');
       if (!ids.includes(me.uid) || !ids.includes(to) || to === me.uid) return res.sendStatus(403);
@@ -56,15 +60,21 @@ app.post('/api/notify', async (req, res) => {
       const members = d.exists ? d.data().members : [];
       if (!members.includes(me.uid)) return res.sendStatus(403);
       targets = members.filter(u => u !== me.uid);
+    } else if (type === 'group') {
+      const d = await db.collection('groups').doc(String(gid || 'x')).get();
+      const gd = d.exists ? d.data() : null;
+      if (!gd || !(gd.members || []).includes(me.uid)) return res.sendStatus(403);
+      gname = String(gd.name || 'Kundi').slice(0, 40);
+      targets = (gd.members || []).filter(u => u !== me.uid);
     } else return res.sendStatus(400);
 
     const name = String(fromName || 'Mtu').slice(0, 40);
-    const title = type === 'call' ? name + ' anapiga ' + (video ? 'video' : 'sauti') : name;
-    const body = type === 'call' ? 'Fungua Unganisha kujibu' : String(text || 'Ujumbe mpya').slice(0, 120);
+    const title = type === 'call' ? name + ' anapiga ' + (video ? 'video' : 'sauti') : type === 'group' ? gname : name;
+    const body = type === 'call' ? 'Fungua Unganisha kujibu' : (type === 'group' ? name + ': ' : '') + String(text || 'Ujumbe mpya').slice(0, 120);
 
     for (const u of targets) {
       const ud = (await db.collection('users').doc(u).get()).data() || {};
-      if ((ud.muted || []).includes(me.uid) || (ud.blocked || []).includes(me.uid)) continue;
+      if ((ud.muted || []).includes(me.uid) || (ud.blocked || []).includes(me.uid) || (type === 'group' && (ud.muted || []).includes('g:' + gid))) continue;
       const snap = await db.collection('users').doc(u).collection('tokens').get();
       const tokens = snap.docs.map(d => d.id);
       if (!tokens.length) continue;
@@ -178,8 +188,8 @@ app.get('/api/media/:id', async (req, res) => {
     }
     if (!r.body) return res.end();
     const body = Readable.fromWeb(r.body);
-    req.on('close', () => { try { r.body.cancel(); } catch (e) {} });
-    body.on('error', () => res.end());
+    res.on('close', () => body.destroy());
+    body.on('error', () => { try { res.end(); } catch (e) {} });
     body.pipe(res);
   } catch (e) { console.error(e); if (!res.headersSent) res.sendStatus(500); else res.end(); }
 });

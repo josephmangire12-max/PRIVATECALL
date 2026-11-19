@@ -31,7 +31,7 @@ async function readN(body, n) {
   const rd = body.getReader(), dec = new TextDecoder();
   let s = '', len = 0;
   try { while (len < n) { const { done, value } = await rd.read(); if (done) break; len += value.length; s += dec.decode(value, { stream: true }); } } catch (e) {}
-  try { rd.cancel(); } catch (e) {}
+  try { rd.cancel().catch(() => {}); } catch (e) {}
   return s;
 }
 async function trace(start) {
@@ -52,7 +52,7 @@ async function trace(start) {
     clearTimeout(tm);
     const loc = r.headers.get('location');
     if ([301, 302, 303, 307, 308].includes(r.status) && loc) {
-      try { r.body && r.body.cancel(); } catch (e) {}
+      try { r.body && r.body.cancel().catch(() => {}); } catch (e) {}
       cur = new URL(loc, cur).href;
       continue;
     }
@@ -62,7 +62,7 @@ async function trace(start) {
       const txt = await readN(r.body, 65536);
       const m = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(txt);
       title = m ? m[1].replace(/\s+/g, ' ').trim().slice(0, 120) : '';
-    } else { try { r.body && r.body.cancel(); } catch (e) {} }
+    } else { try { r.body && r.body.cancel().catch(() => {}); } catch (e) {} }
     return { final: cur, status: r.status, ct, title, hops, disp: r.headers.get('content-disposition') || '' };
   }
   return { final: cur, tooMany: true, hops };
