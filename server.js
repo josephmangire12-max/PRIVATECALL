@@ -184,7 +184,7 @@ app.post('/api/ai/chat', async (req, res) => {
     } catch (e) {
       await quota(uid, 'chat', LIM_CHAT, -1).catch(() => {});
       console.error('gemini chat:', e.message);
-      res.status(e.code === 'blocked' ? 422 : 502).json({ error: e.code === 'blocked' ? 'Gemini haikuweza kujibu swali hilo. Jaribu kuuliza tofauti.' : 'Gemini haipatikani kwa sasa, jaribu tena.', left: q.left + 1 });
+      res.status(e.code === 'blocked' ? 422 : 502).json({ error: e.code === 'blocked' ? 'Gemini haikuweza kujibu swali hilo. Jaribu kuuliza tofauti.' : ai.hint(e), detail: e.code === 'blocked' ? '' : String(e.message || '').slice(0, 200), left: q.left + 1 });
     }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
 });
@@ -202,10 +202,50 @@ app.post('/api/ai/sticker', async (req, res) => {
     } catch (e) {
       await quota(uid, 'stk', LIM_STK, -1).catch(() => {});
       console.error('gemini sticker:', e.message);
-      res.status(e.code === 'blocked' ? 422 : 502).json({ error: e.code === 'blocked' ? 'Gemini haikuweza kutengeneza sticker hiyo. Jaribu maelezo mengine.' : 'Gemini haipatikani kwa sasa, jaribu tena.' });
+      res.status(e.code === 'blocked' ? 422 : 502).json({ error: e.code === 'blocked' ? 'Gemini haikuweza kutengeneza sticker hiyo. Jaribu maelezo mengine.' : ai.hint(e), detail: e.code === 'blocked' ? '' : String(e.message || '').slice(0, 200) });
     }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
 });
+app.get('/api/ai/diag', async (req, res) => {
+  try {
+    const uid = await authed(req, res); if (!uid) return;
+    if (limitedL(uid)) return res.status(429).json({ error: 'Maombi mengi sana' });
+    res.json(await ai.diag());
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
+});
+
+// ICE servers kwa simu (STUN + TURN). TURN inahitajika kwenye mitandao mingi ya simu ili sauti ipite.
+app.get('/api/turn', async (req, res) => {
+  try {
+    const uid = await authed(req, res); if (!uid) return;
+    const T = process.env, out = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
+    let kind = 'public';
+    try {
+      if (T.TURN_URLS) {
+        out.push({ urls: T.TURN_URLS.split(',').map(x => x.trim()).filter(Boolean), username: T.TURN_USERNAME || '', credential: T.TURN_CREDENTIAL || '' });
+        kind = 'own';
+      } else if (T.METERED_DOMAIN && T.METERED_API_KEY) {
+        const r = await fetch('https://' + T.METERED_DOMAIN + '/api/v1/turn/credentials?apiKey=' + encodeURIComponent(T.METERED_API_KEY));
+        const a = r.ok ? await r.json() : null;
+        if (Array.isArray(a) && a.length) { a.forEach(x => out.push(x)); kind = 'own'; }
+      } else if (T.CF_TURN_KEY_ID && T.CF_TURN_API_TOKEN) {
+        const r = await fetch('https://rtc.live.cloudflare.com/v1/turn/keys/' + encodeURIComponent(T.CF_TURN_KEY_ID) + '/credentials/generate-ice-servers', {
+          method: 'POST', headers: { Authorization: 'Bearer ' + T.CF_TURN_API_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ ttl: 86400 })
+        });
+        const d = r.ok ? await r.json() : null;
+        const l = d && d.iceServers ? [].concat(d.iceServers) : [];
+        if (l.length) { l.forEach(x => out.push(x)); kind = 'own'; }
+      }
+    } catch (e) { console.error('turn:', e.message); }
+    if (kind === 'public') {
+      // Seva ya umma ya majaribio (Open Relay). Ni ya pamoja na ina kikomo; weka TURN yako mwenyewe kwa uhakika zaidi.
+      out.push({ urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' });
+    }
+    res.set('Cache-Control', 'no-store');
+    res.json({ iceServers: out, kind });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
+});
+
 app.get('/api/gif/search', async (req, res) => {
   try {
     const uid = await authed(req, res); if (!uid) return;
