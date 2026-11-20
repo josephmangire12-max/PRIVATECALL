@@ -3,6 +3,7 @@ const path = require('path');
 const admin = require('firebase-admin');
 const { Readable } = require('stream');
 const linkcheck = require('./linkcheck');
+const ai = require('./ai');
 
 // Usiache server ianguke kwa hitilafu zisizotarajiwa (mfano mteja kukata muunganisho)
 process.on('unhandledRejection', e => console.error('unhandledRejection:', e && e.message));
@@ -37,7 +38,7 @@ async function authed(req, res) {
 
 const app = express();
 app.disable('x-powered-by');
-app.use(express.json({ limit: '20kb' }));
+app.use(express.json({ limit: '64kb' }));
 app.use((req, res, next) => {
   res.set('Permissions-Policy', 'camera=(self), microphone=(self)');
   next();
@@ -130,6 +131,94 @@ app.post('/api/upload/complete', async (req, res) => {
     }
     if (!r.ok || !d.file) return res.status(r.ok ? 502 : r.status).json({ error: hmsg(r.status, d) });
     res.json({ id: d.file.id, name: d.file.name, category: d.file.category, url: '/api/media/' + d.file.id });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
+});
+
+// ---- Gemini AI (majibu kwa siku), sticker za AI, na GIF ----
+const LIM_CHAT = +process.env.AI_DAILY_LIMIT || 3;
+const LIM_STK = +process.env.AI_STICKER_LIMIT || 5;
+const memQ = new Map();
+const today = () => new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10); // saa za Afrika Mashariki
+// delta: 0 = soma, 1 = tumia, -1 = rudisha. Inatumia Firestore ikiwa FIREBASE_SERVICE_ACCOUNT ipo, vinginevyo kumbukumbu ya server.
+async function quota(uid, kind, limit, delta) {
+  const day = today(), id = uid + '_' + kind;
+  if (pushReady) {
+    const fs = admin.firestore(), ref = fs.collection('aiq').doc(id);
+    return fs.runTransaction(async t => {
+      const s = await t.get(ref), n0 = s.exists && s.data().d === day ? s.data().n : 0;
+      if (delta > 0 && n0 >= limit) return { ok: false, left: 0 };
+      const n = Math.max(0, n0 + delta);
+      if (delta) t.set(ref, { d: day, n, uid });
+      return { ok: true, left: Math.max(0, limit - n) };
+    });
+  }
+  const m = memQ.get(id), n0 = m && m.d === day ? m.n : 0;
+  if (delta > 0 && n0 >= limit) return { ok: false, left: 0 };
+  const n = Math.max(0, n0 + delta);
+  if (delta) memQ.set(id, { d: day, n });
+  return { ok: true, left: Math.max(0, limit - n) };
+}
+app.get('/api/ai/status', async (req, res) => {
+  try {
+    const uid = await authed(req, res); if (!uid) return;
+    const [c, s] = await Promise.all([quota(uid, 'chat', LIM_CHAT, 0), quota(uid, 'stk', LIM_STK, 0)]);
+    res.json({ ai: !!process.env.GEMINI_API_KEY, gif: !!process.env.GIPHY_API_KEY, chatLeft: c.left, chatLimit: LIM_CHAT, stkLeft: s.left, stkLimit: LIM_STK });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
+});
+app.post('/api/ai/chat', async (req, res) => {
+  try {
+    const uid = await authed(req, res); if (!uid) return;
+    if (!process.env.GEMINI_API_KEY) return res.status(503).json({ error: 'Gemini haijawekwa kwenye server (GEMINI_API_KEY).' });
+    if (pushReady) {
+      const ud = (await admin.firestore().collection('users').doc(uid).get()).data() || {};
+      if (!(ud.me && ud.me.phone)) return res.status(403).json({ error: 'Unganisha namba yako ya simu kwanza.' });
+    }
+    const msgs = (Array.isArray((req.body || {}).messages) ? req.body.messages : []).slice(-8)
+      .map(m => ({ r: m.r === 'a' ? 'a' : 'u', t: String(m.t || '').slice(0, 1500) })).filter(m => m.t);
+    if (!msgs.length || msgs[msgs.length - 1].r !== 'u') return res.status(400).json({ error: 'Ujumbe si sahihi' });
+    const q = await quota(uid, 'chat', LIM_CHAT, 1);
+    if (!q.ok) return res.status(429).json({ error: 'Umefikia kikomo cha leo. Jaribu tena kesho.', left: 0 });
+    try {
+      const reply = await ai.chat(msgs, req.body.lang);
+      res.json({ reply, left: q.left });
+    } catch (e) {
+      await quota(uid, 'chat', LIM_CHAT, -1).catch(() => {});
+      console.error('gemini chat:', e.message);
+      res.status(e.code === 'blocked' ? 422 : 502).json({ error: e.code === 'blocked' ? 'Gemini haikuweza kujibu swali hilo. Jaribu kuuliza tofauti.' : 'Gemini haipatikani kwa sasa, jaribu tena.', left: q.left + 1 });
+    }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
+});
+app.post('/api/ai/sticker', async (req, res) => {
+  try {
+    const uid = await authed(req, res); if (!uid) return;
+    if (!process.env.GEMINI_API_KEY) return res.status(503).json({ error: 'Gemini haijawekwa kwenye server (GEMINI_API_KEY).' });
+    const prompt = String((req.body || {}).prompt || '').trim();
+    if (prompt.length < 2) return res.status(400).json({ error: 'Eleza sticker unayotaka.' });
+    const q = await quota(uid, 'stk', LIM_STK, 1);
+    if (!q.ok) return res.status(429).json({ error: 'Umefikia kikomo cha sticker za AI cha leo. Jaribu tena kesho.' });
+    try {
+      const img = await ai.sticker(prompt);
+      res.json({ mime: img.mime, data: img.data, left: q.left, limit: LIM_STK });
+    } catch (e) {
+      await quota(uid, 'stk', LIM_STK, -1).catch(() => {});
+      console.error('gemini sticker:', e.message);
+      res.status(e.code === 'blocked' ? 422 : 502).json({ error: e.code === 'blocked' ? 'Gemini haikuweza kutengeneza sticker hiyo. Jaribu maelezo mengine.' : 'Gemini haipatikani kwa sasa, jaribu tena.' });
+    }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
+});
+app.get('/api/gif/search', async (req, res) => {
+  try {
+    const uid = await authed(req, res); if (!uid) return;
+    const k = process.env.GIPHY_API_KEY;
+    if (!k) return res.status(503).json({ error: 'nokey' });
+    if (limitedL(uid)) return res.status(429).json({ error: 'Maombi mengi sana' });
+    const q = String(req.query.q || '').trim().slice(0, 60);
+    const url = q
+      ? 'https://api.giphy.com/v1/gifs/search?api_key=' + encodeURIComponent(k) + '&q=' + encodeURIComponent(q) + '&limit=24&rating=pg-13'
+      : 'https://api.giphy.com/v1/gifs/trending?api_key=' + encodeURIComponent(k) + '&limit=24&rating=pg-13';
+    const r = await fetch(url), d = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(502).json({ error: 'GIF hazipatikani kwa sasa' });
+    res.json((d.data || []).map(g => ({ id: g.id, u: (g.images.fixed_height || g.images.original).url, p: (g.images.fixed_width_small || g.images.fixed_height || g.images.original).url })));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Hitilafu ya server' }); }
 });
 
